@@ -5,6 +5,9 @@
 [![Runtime: Web Audio](https://img.shields.io/badge/runtime-Web%20Audio-007c83)](#architecture)
 [![Deployment: static files](https://img.shields.io/badge/deployment-static%20files-2459a6)](#deployment)
 [![License: not specified](https://img.shields.io/badge/license-not%20specified-60576e)](#license)
+[![Live site: GitHub Pages](https://img.shields.io/badge/live%20site-GitHub%20Pages-1f6feb)](https://zazieproductions.github.io/spectre-signal/)
+
+**Live site:** <https://zazieproductions.github.io/spectre-signal/>
 
 A browser workbench for comparing **what an audio file contains** with **what it sounds like**. Inspect the file bytes, listen through a filter, and watch the spectrum change without changing the file. A built-in synthetic WAV lets you try both views without supplying a recording.
 
@@ -216,6 +219,8 @@ Use Tab/Shift+Tab to move among native controls, Enter/Space on focused buttons 
 The application implements no file-upload endpoint, microphone capture, account or remote collection. **Local processing is not isolation**: the page loads third-party scripts and font resources, and some file-derived text is rendered as HTML. Use the generated fixture or trusted recordings you have permission to inspect, not hostile files or confidential evidence. Clipboard copies and downloads can outlive the page. Entropy, keyword hits, DTMF matches and high-band warnings are observations, not proof of hidden communications. See [security and private reporting](SECURITY.md) and the [research boundaries](docs/RESEARCH_ETHICS.md).
 
 ## Deployment
+
+The project is published from the repository root through GitHub Pages at <https://zazieproductions.github.io/spectre-signal/> (branch `main`, `/` root). That site is built from `main`, so it updates after changes merge there.
 
 Serve `index.html` and `src/` together from a static **HTTPS** origin, preserving their relative paths. There is no build output or application server to deploy. The shipped page is **not offline-ready**. See the [deployment guide](docs/DEPLOYMENT.md) for the file layout, GitHub Pages settings, external dependencies and post-deploy checks.
 
