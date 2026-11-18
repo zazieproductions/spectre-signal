@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 856 242" width="856" height="242" role="img" aria-labelledby="title desc">
+  <title id="title">Signal layers in the generated WAV</title>
+  <desc id="desc">At normal playback speed the bed lasts 6.5 seconds. Keys 9, 1, 1, #, C and 2 start at 0.3, 0.8, 1.3, 1.8, 2.3 and 2.8 seconds and last 0.35 seconds each. The high tone alternates from 0.5 to 6 seconds. The spectral word occupies 3.3 to 6.2 seconds.</desc>
+  <rect width="856" height="242" rx="10" fill="#0e131a"/>
+  <g font-family="system-ui, sans-serif">
+    <text x="20" y="30" font-size="18" font-weight="bold" fill="#f1f5f9">Inside the generated WAV</text>
+    <text x="20" y="51" font-size="13" fill="#cbd5e1">Time in seconds at normal playback speed</text>
+    <!-- Horizontal scale: x = 160 + 100 * seconds. -->
+    <path d="M160 80V222 M260 80V222 M360 80V222 M460 80V222 M560 80V222 M660 80V222 M760 80V222 M810 80V222" stroke="#475569"/>
+    <g text-anchor="middle" font-size="13" fill="#cbd5e1">
+      <text x="160" y="74">0</text><text x="260" y="74">1</text><text x="360" y="74">2</text><text x="460" y="74">3</text>
+      <text x="560" y="74">4</text><text x="660" y="74">5</text><text x="760" y="74">6</text><text x="810" y="74">6.5</text>
+    </g>
+    <g font-size="14" fill="#e2e8f0">
+      <text x="20" y="104">Drone + noise</text><text x="20" y="139">DTMF bursts</text>
+      <text x="20" y="174">High tone</text><text x="20" y="209">Spectral word</text>
+    </g>
+    <rect x="160" y="88" width="650" height="22" rx="3" fill="#60c9dd"/>
+    <g fill="#ffc45d">
+      <rect x="190" y="123" width="35" height="22" rx="3"/><rect x="240" y="123" width="35" height="22" rx="3"/>
+      <rect x="290" y="123" width="35" height="22" rx="3"/><rect x="340" y="123" width="35" height="22" rx="3"/>
+      <rect x="390" y="123" width="35" height="22" rx="3"/><rect x="440" y="123" width="35" height="22" rx="3"/>
+    </g>
+    <g text-anchor="middle" font-size="14" font-weight="bold" fill="#111827">
+      <text x="207.5" y="139">9</text><text x="257.5" y="139">1</text><text x="307.5" y="139">1</text>
+      <text x="357.5" y="139">#</text><text x="407.5" y="139">C</text><text x="457.5" y="139">2</text>
+    </g>
+    <rect x="210" y="158" width="550" height="22" rx="3" fill="#ff8fbc"/>
+    <rect x="490" y="193" width="290" height="22" rx="3" fill="#7edba0"/>
+    <g font-size="13" fill="#111827">
+      <text x="168" y="104">110 / 220 Hz bed</text><text x="218" y="174">18.6 / 19.4 kHz, alternating</text>
+      <text x="498" y="209">5 × 7 glyphs · 9.5–15.2 kHz</text>
+    </g>
+  </g>
+</svg>

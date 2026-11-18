@@ -1,0 +1,41 @@
+name: Bug report
+description: Report a reproducible problem in the workbench or its documentation.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please use synthetic inputs. Do not attach private audio, metadata or personal data.
+        For vulnerabilities, follow the [private reporting policy](https://github.com/zazieproductions/spectre-signal/blob/main/SECURITY.md) instead.
+  - type: input
+    id: environment
+    attributes:
+      label: Browser version, operating system and serving context
+      description: Include whether the page was served on localhost or HTTPS. No private hostnames are needed.
+    validations:
+      required: true
+  - type: dropdown
+    id: fixture
+    attributes:
+      label: Input used
+      options:
+        - Built-in generated WAV
+        - Silent WAV from the testing guide
+        - Another authorized, non-sensitive local file
+        - No audio involved
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Start from a fresh page. Include the controls and settings, or the documentation section involved.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Expected and observed results
+      description: What should have happened? What happened instead? Redact any sensitive console output.
+    validations:
+      required: true
