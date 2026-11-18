@@ -34,6 +34,37 @@ PY
 
 Use **INGEST AUDIO TARGET** with the printed path. Expect `RIFF`, **96,044 bytes** (44-byte header plus 96,000 data bytes), **1.00s / 1ch**, a flat waveform and the same digest. Entropy need not be zero: the histogram includes the header. The display rate is the decoded context rate. You can delete the temporary directory after testing.
 
+## Crossed sweeps for the gallery
+
+This optional fixture draws the X in the [palette and filter experiments](../README.md#experiment-gallery): during one second, one sine tone rises from 400 Hz to 14,400 Hz while a second falls through the same range. Loop it to compare palettes and filters on the same input. Start with speaker volume low or muted; the analyser still works with the speakers muted.
+
+```sh
+python3 - <<'PY'
+import math
+import struct
+import tempfile
+import wave
+from pathlib import Path
+
+path = Path(tempfile.mkdtemp(prefix='spectre-test-')) / 'crossed-sweeps.wav'
+rate = 48000
+low, high = 400, 14400
+pcm = bytearray()
+for i in range(rate):
+    t = i / rate
+    bend = (high - low) * t * t / 2
+    rising = math.sin(math.tau * (low * t + bend))
+    falling = math.sin(math.tau * (high * t - bend))
+    pcm.extend(struct.pack('<h', round(3200 * (rising + falling))))
+with wave.open(str(path), 'wb') as wav:
+    wav.setparams((1, 2, rate, 0, 'NONE', 'not compressed'))
+    wav.writeframes(pcm)
+print(path)
+PY
+```
+
+Ingest the printed path. Expect **1.00s / 1ch** and two moving peaks that meet halfway through the loop. The waterfall scrolls per animation frame, so the height of each X will vary. Delete the temporary file when finished.
+
 ## Browser smoke checks
 
 Start with a fresh page on [localhost](../README.md#quick-start) or HTTPS and low speaker volume. Use the built-in WAV unless the row specifies another input. These are manual observations, not benchmark pass marks.
