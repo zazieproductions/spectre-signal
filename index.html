@@ -1,0 +1,428 @@
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPECTRE-SIGNAL // Offensive Audio Forensics & SIGINT Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        mono: ['"Fira Code"', 'monospace'],
+                        display: ['"Orbitron"', 'sans-serif'],
+                    },
+                    colors: {
+                        cyber: {
+                            black: '#050608',
+                            dark: '#0a0d12',
+                            panel: '#0e131a',
+                            border: '#1e293b',
+                            green: '#00ff66',
+                            cyan: '#00f3ff',
+                            red: '#ff0055',
+                            amber: '#ffb800',
+                        }
+                    },
+                    boxShadow: {
+                        'neon-green': '0 0 10px rgba(0, 255, 102, 0.3), inset 0 0 10px rgba(0, 255, 102, 0.1)',
+                        'neon-cyan': '0 0 10px rgba(0, 243, 255, 0.3), inset 0 0 10px rgba(0, 243, 255, 0.1)',
+                        'neon-red': '0 0 10px rgba(255, 0, 85, 0.3), inset 0 0 10px rgba(255, 0, 85, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="./src/styles/main.css">
+</head>
+<body class="scanlines cyber-grid min-h-screen flex flex-col selection:bg-cyber-cyan selection:text-cyber-black">
+
+    <!-- TOP NAVIGATION / STATUS BAR -->
+    <header class="border-b border-cyber-border bg-cyber-dark/90 backdrop-blur-md sticky top-0 z-40 px-4 py-2 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+            <div class="w-3 h-3 bg-cyber-green rounded-full shadow-neon-green animate-pulse-fast"></div>
+            <span class="font-display font-black text-xl tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-cyber-cyan via-cyber-green to-cyber-cyan">
+                SPECTRE-SIGNAL
+            </span>
+            <span class="text-xs bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/30 px-2 py-0.5 rounded-sm">
+                v4.0.9-OFFENSIVE
+            </span>
+        </div>
+
+        <!-- Hidden file input -->
+        <input type="file" id="audio-upload" accept="audio/*" class="hidden">
+
+        <div class="flex items-center space-x-3 text-xs">
+            <button id="btn-upload" class="flex items-center space-x-1.5 bg-cyber-panel hover:bg-cyber-cyan/20 text-cyber-cyan border border-cyber-cyan/50 px-3 py-1.5 transition-all shadow-neon-cyan">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                <span>INGEST AUDIO TARGET</span>
+            </button>
+
+            <button id="btn-synth" class="flex items-center space-x-1.5 bg-cyber-panel hover:bg-cyber-red/20 text-cyber-red border border-cyber-red/50 px-3 py-1.5 transition-all shadow-neon-red">
+                <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+                <span>GENERATE COVERT C2 PAYLOAD</span>
+            </button>
+
+            <div class="hidden xl:flex items-center space-x-4 border-l border-cyber-border pl-4 text-slate-400">
+                <div>ENGINE: <span id="status-engine" class="text-cyber-green">WEB_AUDIO_API</span></div>
+                <div>SR: <span id="status-sr" class="text-cyber-cyan">48000 Hz</span></div>
+                <div>MEM: <span id="status-mem" class="text-cyber-amber">14.2 MB</span></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN WORKSPACE GRID -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 p-3 max-w-[1920px] w-full mx-auto">
+
+        <!-- LEFT COLUMN: TARGET TELEMETRY, HASHING & LSB STEGANOGRAPHY (3 COLS) -->
+        <div class="lg:col-span-3 flex flex-col gap-3">
+            
+            <!-- Target Metadata & Cryptographic Hashes -->
+            <section class="bg-cyber-panel border border-cyber-border corner-accent p-3 flex flex-col gap-2">
+                <div class="flex items-center justify-between border-b border-cyber-border pb-2">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="fingerprint" class="w-4 h-4 text-cyber-cyan"></i>
+                        <h2 class="text-xs font-bold tracking-widest text-cyber-cyan uppercase">Target Artifact Telemetry</h2>
+                    </div>
+                    <span id="file-badge" class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5">NO_TARGET</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs my-1">
+                    <div class="bg-cyber-dark p-2 border border-cyber-border/50">
+                        <div class="text-[10px] text-slate-500">FILENAME</div>
+                        <div id="meta-name" class="text-slate-200 truncate font-medium">---</div>
+                    </div>
+                    <div class="bg-cyber-dark p-2 border border-cyber-border/50">
+                        <div class="text-[10px] text-slate-500">SIZE / MIME</div>
+                        <div id="meta-size" class="text-slate-200 truncate">0 B</div>
+                    </div>
+                    <div class="bg-cyber-dark p-2 border border-cyber-border/50">
+                        <div class="text-[10px] text-slate-500">DURATION / CHANNELS</div>
+                        <div id="meta-duration" class="text-cyber-green">0.00s / --</div>
+                    </div>
+                    <div class="bg-cyber-dark p-2 border border-cyber-border/50">
+                        <div class="text-[10px] text-slate-500">SHANNON ENTROPY</div>
+                        <div id="meta-entropy" class="text-cyber-amber font-bold">0.000 bits/byte</div>
+                    </div>
+                </div>
+
+                <!-- File Signature & Hashes -->
+                <div class="space-y-1.5 text-[11px] bg-cyber-dark p-2 border border-cyber-border/60">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">MAGIC BYTES:</span>
+                        <span id="meta-magic" class="text-cyber-cyan font-mono">00 00 00 00</span>
+                    </div>
+                    <div>
+                        <div class="text-slate-500 flex justify-between">
+                            <span>SHA-256 DIGEST:</span>
+                            <button onclick="copyHash('meta-sha256')" class="text-[10px] text-cyber-cyan hover:underline">COPY</button>
+                        </div>
+                        <div id="meta-sha256" class="text-[10px] text-slate-300 break-all font-mono bg-black/40 p-1 mt-0.5 border border-slate-800">
+                            e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-slate-500">RIFF / ID3 / VORBIS TAGS:</div>
+                        <div id="meta-tags" class="text-[10px] text-cyber-green font-mono bg-black/40 p-1.5 mt-0.5 border border-slate-800 max-h-24 overflow-y-auto space-y-1">
+                            <span class="text-slate-500">// Awaiting binary stream...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LSB Steganography & Bitplane Extractor -->
+            <section class="bg-cyber-panel border border-cyber-border corner-accent p-3 flex-1 flex flex-col gap-2">
+                <div class="flex items-center justify-between border-b border-cyber-border pb-2">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="layers" class="w-4 h-4 text-cyber-green"></i>
+                        <h2 class="text-xs font-bold tracking-widest text-cyber-green uppercase">LSB Stego & Bitplane Extractor</h2>
+                    </div>
+                    <span class="text-[10px] text-slate-400">PCM_16/8-BIT</span>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs">
+                    <label class="text-slate-400 text-[11px]">OFFSET (HEX):</label>
+                    <input type="text" id="lsb-offset" value="0x2C" class="bg-cyber-dark border border-cyber-border text-cyber-cyan px-2 py-1 w-20 text-xs focus:outline-none focus:border-cyber-cyan">
+                    <label class="text-slate-400 text-[11px]">STEP:</label>
+                    <select id="lsb-step" class="bg-cyber-dark border border-cyber-border text-cyber-cyan px-2 py-1 text-xs focus:outline-none">
+                        <option value="1">1 Byte</option>
+                        <option value="2" selected>2 Bytes (16-bit PCM)</option>
+                        <option value="4">4 Bytes (32-bit Float)</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-1.5 my-1">
+                    <button id="btn-run-lsb" class="bg-cyber-green/10 hover:bg-cyber-green/20 text-cyber-green border border-cyber-green/40 py-1.5 text-xs font-medium transition">
+                        EXTRACT LSB STREAM
+                    </button>
+                    <button id="btn-inject-lsb" class="bg-cyber-amber/10 hover:bg-cyber-amber/20 text-cyber-amber border border-cyber-amber/40 py-1.5 text-xs font-medium transition">
+                        INJECT LSB PAYLOAD
+                    </button>
+                </div>
+
+                <div class="text-[10px] text-slate-400 flex justify-between items-center">
+                    <span>BITSTREAM DECODED ASCII:</span>
+                    <span id="lsb-chi" class="text-cyber-cyan">Chi-Sq Anomaly: LOW</span>
+                </div>
+                <textarea id="lsb-output" readonly class="w-full flex-1 min-h-[140px] bg-black/60 border border-slate-800 p-2 text-[11px] text-cyber-green font-mono focus:outline-none resize-none" placeholder="LSB extracted payload will materialize here..."></textarea>
+
+                <!-- Quick Payload Injector Input -->
+                <div class="flex gap-1 mt-1">
+                    <input type="text" id="lsb-secret-input" placeholder="FLAG{c0v3rt_s0n1c_exf1l_99}" class="flex-1 bg-cyber-dark border border-cyber-border px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-cyber-amber">
+                    <button id="btn-export-stego" title="Download Modified WAV" class="bg-cyber-panel hover:bg-slate-800 border border-cyber-border px-2.5 text-cyber-amber flex items-center">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </section>
+        </div>
+
+        <!-- CENTER COLUMN: REAL-TIME DSP, SPECTROGRAM, WAVEFORM & TRANSPORT (6 COLS) -->
+        <div class="lg:col-span-6 flex flex-col gap-3">
+            
+            <!-- Master Transport & Parametric Filtering Controls -->
+            <section class="bg-cyber-panel border border-cyber-border corner-accent p-3">
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-cyber-border">
+                    <div class="flex items-center space-x-2">
+                        <button id="btn-play" class="bg-cyber-cyan text-cyber-black hover:bg-cyber-cyan/80 px-4 py-1.5 font-bold text-xs flex items-center space-x-1.5 transition shadow-neon-cyan">
+                            <i data-lucide="play" class="w-4 h-4 fill-current" id="icon-play"></i>
+                            <span id="text-play">ENGAGE STREAM</span>
+                        </button>
+                        <button id="btn-stop" class="bg-cyber-dark hover:bg-slate-800 text-slate-300 border border-cyber-border px-3 py-1.5 text-xs flex items-center space-x-1 transition">
+                            <i data-lucide="square" class="w-3.5 h-3.5"></i>
+                            <span>HALT</span>
+                        </button>
+                        <button id="btn-loop" class="bg-cyber-dark hover:bg-slate-800 text-cyber-cyan border border-cyber-cyan/40 px-2.5 py-1.5 text-xs transition" title="Toggle Loop">
+                            <i data-lucide="repeat" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+
+                    <!-- Time Readout -->
+                    <div class="font-display text-lg tracking-wider bg-black px-3 py-1 border border-cyber-border text-cyber-cyan">
+                        <span id="time-current">00:00.000</span>
+                        <span class="text-slate-600 text-sm">/</span>
+                        <span id="time-total" class="text-slate-400 text-sm">00:00.000</span>
+                    </div>
+                </div>
+
+                <!-- DSP Biquad Filter & Ultrasonic Pitch Controls -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 text-xs">
+                    <div class="bg-cyber-dark p-2 border border-cyber-border/60">
+                        <div class="flex justify-between text-[10px] text-slate-400 mb-1">
+                            <span>FILTER TOPOLOGY</span>
+                            <span id="val-filter-type" class="text-cyber-cyan">ALLPASS</span>
+                        </div>
+                        <select id="dsp-filter-type" class="w-full bg-cyber-panel border border-cyber-border text-slate-200 px-1.5 py-1 text-xs focus:outline-none focus:border-cyber-cyan">
+                            <option value="allpass">ALLPASS (RAW)</option>
+                            <option value="highpass">HIGHPASS (ULTRASONIC)</option>
+                            <option value="bandpass">BANDPASS (ISOLATE C2)</option>
+                            <option value="lowpass">LOWPASS (SUB-BASS)</option>
+                            <option value="notch">NOTCH (KILL CARRIER)</option>
+                        </select>
+                    </div>
+
+                    <div class="bg-cyber-dark p-2 border border-cyber-border/60">
+                        <div class="flex justify-between text-[10px] text-slate-400 mb-1">
+                            <span>CUTOFF FREQ</span>
+                            <span id="val-cutoff" class="text-cyber-cyan">18000 Hz</span>
+                        </div>
+                        <input type="range" id="dsp-cutoff" min="60" max="22000" value="18000" class="w-full mt-1.5">
+                    </div>
+
+                    <div class="bg-cyber-dark p-2 border border-cyber-border/60">
+                        <div class="flex justify-between text-[10px] text-slate-400 mb-1">
+                            <span>PLAYBACK RATE (DEMOD)</span>
+                            <span id="val-rate" class="text-cyber-green">1.00x</span>
+                        </div>
+                        <input type="range" id="dsp-rate" min="0.1" max="2.0" step="0.05" value="1.0" class="w-full mt-1.5">
+                    </div>
+
+                    <div class="bg-cyber-dark p-2 border border-cyber-border/60">
+                        <div class="flex justify-between text-[10px] text-slate-400 mb-1">
+                            <span>GAIN / PRE-AMP</span>
+                            <span id="val-gain" class="text-cyber-amber">100%</span>
+                        </div>
+                        <input type="range" id="dsp-gain" min="0" max="200" value="100" class="w-full mt-1.5">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Time-Domain Waveform & Scrubbing Canvas -->
+            <section class="bg-cyber-panel border border-cyber-border corner-accent p-3 flex flex-col gap-1.5">
+                <div class="flex items-center justify-between text-xs">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="activity" class="w-4 h-4 text-cyber-cyan"></i>
+                        <span class="font-bold tracking-wider text-slate-200">TIME-DOMAIN AMPLITUDE ENVELOPE & OSCILLOSCOPE</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 space-x-3">
+                        <span>PEAK: <strong id="stat-peak" class="text-cyber-green">-0.4 dBFS</strong></span>
+                        <span>RMS: <strong id="stat-rms" class="text-cyber-cyan">-14.2 dBFS</strong></span>
+                    </div>
+                </div>
+                <div class="relative h-28 bg-cyber-black border border-cyber-border cursor-crosshair overflow-hidden" id="waveform-container">
+                    <canvas id="canvas-waveform" class="w-full h-full block"></canvas>
+                    <div id="playhead" class="absolute top-0 bottom-0 w-0.5 bg-cyber-red shadow-neon-red pointer-events-none" style="left: 0%;"></div>
+                    <div class="absolute bottom-1 right-2 text-[10px] text-slate-500 pointer-events-none">CLICK TO SEEK // REAL-TIME OVERLAY</div>
+                </div>
+            </section>
+
+            <!-- High-Resolution Waterfall Spectrogram & FFT Spectrum -->
+            <section class="bg-cyber-panel border border-cyber-border corner-accent p-3 flex-1 flex flex-col gap-2">
+                <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="radio" class="w-4 h-4 text-cyber-red animate-pulse"></i>
+                        <span class="font-bold tracking-wider text-slate-200">WATERFALL SPECTROGRAM // STEGANOGRAPHIC IMAGE HUNTER</span>
+                    </div>
+                    <div class="flex items-center space-x-2 text-[10px]">
+                        <span class="text-slate-400">COLORMAP:</span>
+                        <select id="spec-palette" class="bg-cyber-dark border border-cyber-border text-cyber-cyan px-1.5 py-0.5">
+                            <option value="cyber">CYBER_THERMAL</option>
+                            <option value="matrix">MATRIX_PHOSPHOR</option>
+                            <option value="inferno">INFERNO_RADAR</option>
+                        </select>
+                        <button id="btn-paint-spec" class="bg-cyber-red/15 hover:bg-cyber-red/30 text-cyber-red border border-cyber-red/50 px-2 py-0.5 transition">
+                            SYNTHESIZE SPECTRAL TEXT
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Frequency Bar Graph + Waterfall -->
+                <div class="relative flex-1 min-h-[270px] bg-cyber-black border border-cyber-border overflow-hidden flex flex-col">
+                    <!-- Top 35%: Real-time FFT Spectrum Analyzer + Ultrasonic Marker -->
+                    <div class="relative h-2/5 border-b border-cyber-border/70">
+                        <canvas id="canvas-fft" class="w-full h-full block"></canvas>
+                        <!-- Ultrasonic Warning Band Overlay (18kHz - 24kHz) -->
+                        <div class="absolute top-0 bottom-0 right-0 w-1/4 bg-cyber-red/5 border-l border-dashed border-cyber-red/40 pointer-events-none flex flex-col justify-between p-1">
+                            <span class="text-[9px] text-cyber-red font-bold tracking-wider">ULTRASONIC / NEAR-ULTRASONIC (>17.5kHz)</span>
+                            <span id="ultrasonic-alert" class="text-[9px] bg-cyber-red/20 text-cyber-red px-1 self-start hidden animate-pulse">ANOMALOUS CARRIER DETECTED</span>
+                        </div>
+                        <div id="fft-hover-readout" class="absolute top-1 left-2 text-[10px] text-cyber-cyan font-mono pointer-events-none">
+                            CURSOR: --- Hz | --- dB
+                        </div>
+                    </div>
+
+                    <!-- Bottom 65%: Scrolling Waterfall Spectrogram -->
+                    <div class="relative h-3/5">
+                        <canvas id="canvas-spectrogram" class="w-full h-full block"></canvas>
+                        <div class="absolute bottom-1 left-2 text-[10px] text-slate-400 bg-black/60 px-1.5 py-0.5 pointer-events-none">
+                            WATERFALL HISTORY (0 Hz ➔ 24,000 Hz)
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- RIGHT COLUMN: SIGINT DECODERS, HEX/STRINGS INSPECTOR & THREAT LOG (3 COLS) -->
+        <div class="lg:col-span-3 flex flex-col gap-3">
+            
+            <!-- Acoustic SIGINT: DTMF, CW Morse & Ultrasonic FSK Beacon Decoder -->
+            <section class="bg-cyber-panel border border-cyber-border corner-accent p-3 flex flex-col gap-2">
+                <div class="flex items-center justify-between border-b border-cyber-border pb-2">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="satellite-dish" class="w-4 h-4 text-cyber-amber"></i>
+                        <h2 class="text-xs font-bold tracking-widest text-cyber-amber uppercase">Acoustic SIGINT Demodulator</h2>
+                    </div>
+                    <span id="sigint-state" class="text-[10px] text-cyber-green flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyber-green animate-ping"></span> ARMED
+                    </span>
+                </div>
+
+                <!-- DTMF Matrix Indicator -->
+                <div class="grid grid-cols-4 gap-1 text-center text-[10px] font-mono my-0.5">
+                    <div id="dtmf-1" class="bg-cyber-dark border border-cyber-border py-1 text-slate-400">1 <span class="text-[8px] text-slate-600">697/1209</span></div>
+                    <div id="dtmf-2" class="bg-cyber-dark border border-cyber-border py-1 text-slate-400">2 <span class="text-[8px] text-slate-600">697/1336</span></div>
+                    <div id="dtmf-3" class="bg-cyber-dark border border-cyber-border py-1 text-slate-400">3 <span class="text-[8px] text-slate-600">697/1477</span></div>
+                    <div id="dtmf-A" class="bg-cyber-dark border border-cyber-border py-1 text-cyber-cyan">A <span class="text-[8px] text-slate-600">1633</span></div>
+                    <div id="dtmf-4" class="bg-cyber-dark border border-cyber-border py-1 text-slate-400">4 <span class="text-[8px] text-slate-600">770/1209</span></div>
+                    <div id="dtmf-5" class="bg-cyber-dark border border-cyber-border py-1 text-slate-400">5 <span class="text-[8px] text-slate-600">770/1336</span></div>
+                    <div id="dtmf-6" class="bg-cyber-dark border border-cyber-border py-1 text-slate-400">6 <span class="text-[8px] text-slate-600">770/1477</span></div>
+                    <div id="dtmf-B" class="bg-cyber-dark border border-cyber-border py-1 text-cyber-cyan">B <span class="text-[8px] text-slate-600">1633</span></div>
+                    <div id="dtmf-7" class="bg-cyber-dark border border-cyber-border py-1 text-slate-400">7 <span class="text-[8px] text-slate-600">852/1209</span></div>
+                    <div id="dtmf-8" class="bg-cyber-dark border border-cyber-border py-1 text-slate-400">8 <span class="text-[8px] text-slate-600">852/1336</span></div>
+                    <div id="dtmf-9" class="bg-cyber-dark border border-cyber-border py-1 text-slate-400">9 <span class="text-[8px] text-slate-600">852/1477</span></div>
+                    <div id="dtmf-C" class="bg-cyber-dark border border-cyber-border py-1 text-cyber-cyan">C <span class="text-[8px] text-slate-600">1633</span></div>
+                    <div id="dtmf-*" class="bg-cyber-dark border border-cyber-border py-1 text-cyber-amber">*</div>
+                    <div id="dtmf-0" class="bg-cyber-dark border border-cyber-border py-1 text-slate-400">0 <span class="text-[8px] text-slate-600">941/1336</span></div>
+                    <div id="dtmf-#" class="bg-cyber-dark border border-cyber-border py-1 text-cyber-amber">#</div>
+                    <div id="dtmf-D" class="bg-cyber-dark border border-cyber-border py-1 text-cyber-cyan">D <span class="text-[8px] text-slate-600">1633</span></div>
+                </div>
+
+                <div class="bg-black/60 border border-slate-800 p-2 text-xs space-y-1">
+                    <div class="flex justify-between text-[10px] text-slate-500">
+                        <span>DECODED DTMF / FSK SEQUENCE:</span>
+                        <button id="btn-clear-sigint" class="text-cyber-red hover:underline">CLEAR</button>
+                    </div>
+                    <div id="sigint-sequence" class="font-mono text-cyber-amber tracking-widest min-h-[20px] break-all">
+                        911#404*8080#C2
+                    </div>
+                </div>
+            </section>
+
+            <!-- Binary Hex & Printable Strings Carving Inspector -->
+            <section class="bg-cyber-panel border border-cyber-border corner-accent p-3 flex-1 flex flex-col gap-2">
+                <div class="flex items-center justify-between border-b border-cyber-border pb-2">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="binary" class="w-4 h-4 text-cyber-cyan"></i>
+                        <h2 class="text-xs font-bold tracking-widest text-cyber-cyan uppercase">Binary Hex & Strings Carver</h2>
+                    </div>
+                    <div class="flex space-x-1 text-[10px]">
+                        <button id="tab-hex" class="bg-cyber-cyan text-cyber-black font-bold px-2 py-0.5">HEX</button>
+                        <button id="tab-strings" class="bg-cyber-dark text-slate-400 border border-cyber-border px-2 py-0.5">STRINGS (≥5)</button>
+                    </div>
+                </div>
+
+                <!-- Search / Filter Strings -->
+                <div class="flex gap-1">
+                    <input type="text" id="hex-search" placeholder="Grep ASCII / Hex (e.g. FLAG, RIFF, http)..." class="w-full bg-cyber-dark border border-cyber-border px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-cyber-cyan">
+                </div>
+
+                <!-- Hex Viewer Container -->
+                <div id="view-hex" class="flex-1 bg-black/70 border border-slate-800 p-2 font-mono text-[10px] leading-relaxed overflow-y-auto max-h-56 select-all">
+                    <div class="text-slate-500">00000000: 52 49 46 46 24 08 00 00  57 41 56 45 66 6d 74 20  |RIFF$...WAVEfmt |</div>
+                </div>
+
+                <!-- Strings Viewer Container -->
+                <div id="view-strings" class="hidden flex-1 bg-black/70 border border-slate-800 p-2 font-mono text-[11px] leading-relaxed overflow-y-auto max-h-56 space-y-1">
+                </div>
+
+                <!-- Live Offensive Threat Audit Log -->
+                <div class="border-t border-cyber-border pt-2 mt-auto">
+                    <div class="text-[10px] text-slate-400 mb-1 flex justify-between">
+                        <span>AUTOMATED HEURISTIC AUDIT LOG</span>
+                        <span class="text-cyber-red">● LIVE</span>
+                    </div>
+                    <div id="audit-log" class="bg-black/80 border border-slate-800 p-2 h-28 overflow-y-auto font-mono text-[10px] space-y-1">
+                    </div>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <!-- MODAL FOR SPECTRAL TEXT SYNTHESIS -->
+    <div id="modal-spectral" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-cyber-panel border border-cyber-cyan corner-accent max-w-md w-full p-4 space-y-3 shadow-neon-cyan">
+            <div class="flex justify-between items-center border-b border-cyber-border pb-2">
+                <h3 class="text-sm font-display text-cyber-cyan font-bold">INJECT SPECTROGRAM WATERMARK</h3>
+                <button id="close-modal" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <p class="text-xs text-slate-400">
+                Synthesizes an inverse-FFT oscillator bank that paints visible characters directly into the high-frequency waterfall spectrogram (11kHz - 21kHz).
+            </p>
+            <div>
+                <label class="text-[10px] text-cyber-green block mb-1">CALLSIGN / PAYLOAD STRING (MAX 12 CHARS):</label>
+                <input type="text" id="spectral-text-input" value="GHOST//C2" maxlength="12" class="w-full bg-cyber-dark border border-cyber-cyan px-3 py-1.5 text-sm text-cyber-cyan font-mono focus:outline-none">
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button id="btn-trigger-spectral" class="bg-cyber-cyan text-cyber-black font-bold px-4 py-1.5 text-xs hover:bg-cyber-cyan/80">
+                    COMPILE & TRANSMIT AUDIO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./src/scripts/app.js" defer></script>
+</body>
+</html>
