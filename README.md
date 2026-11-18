@@ -12,15 +12,28 @@ SPECTRE-SIGNAL was extracted from the [SONIC-GHOST prototype](archive/sonic-ghos
 
 ## Contents
 
-1. [Quick start](#quick-start) · [First inspection](#first-inspection)
-2. [Control reference](#control-reference)
+1. [Screenshots](#screenshots) · [Quick start](#quick-start) · [First inspection](#first-inspection)
+2. [Experiment gallery](#experiment-gallery) · [Palette memory](#palette-memory) · [Filter comparison](#filter-comparison) · [Spectral text](#spectral-text) · [Tones and bytes](#tones-and-bytes)
+3. [Control reference](#control-reference)
    - [Inputs and transport](#inputs-and-transport)
    - [DSP and display](#dsp-and-display)
    - [Byte and tone inspectors](#byte-and-tone-inspectors)
-3. [Preset reference](#preset-reference) · [Filter topologies](#filter-topologies) · [Waterfall palettes](#waterfall-palettes) · [Generated specimen](#generated-specimen)
-4. [Architecture](#architecture) · [Performance](#performance)
-5. [Accessibility](#accessibility) · [Security and privacy](#security-and-privacy)
-6. [Deployment](#deployment) · [Testing](#testing) · [Contributing](#contributing) · [License](#license)
+4. [Preset reference](#preset-reference) · [Filter topologies](#filter-topologies) · [Waterfall palettes](#waterfall-palettes) · [Generated specimen](#generated-specimen)
+5. [Architecture](#architecture) · [Performance](#performance)
+6. [Accessibility](#accessibility) · [Security and privacy](#security-and-privacy)
+7. [Deployment](#deployment) · [Testing](#testing) · [Contributing](#contributing) · [License](#license)
+
+## Screenshots
+
+**Playback.** The built-in 6.5-second WAV playing in Chromium. The waveform spans the whole file; the FFT bars show the spectrum at the playhead, and the waterfall shows its recent history.
+
+[![SPECTRE-SIGNAL during playback: a red playhead crosses the cyan waveform above the FFT and waterfall, with file telemetry on the left and hex bytes on the right.](docs/screenshots/workbench-playback.png)](docs/screenshots/workbench-playback.png)
+
+**Two ways to read the built-in WAV.** Search `RIFF` in **HEX** to see the header bytes at the start of the file. Search `PROJECT` in **STRINGS (≥5)** to find a tag near the end. Both views report file offsets, not playback times.
+
+| HEX · `RIFF` | STRINGS · `PROJECT` |
+| --- | --- |
+| [![Hex inspector showing 52 49 46 46 at offset zero, with RIFF and WAVE in the ASCII preview.](docs/screenshots/hex-header.png)](docs/screenshots/hex-header.png) | [![Strings inspector showing PROJECT_SONIC_GHOST at offset 0x0985C0 above the audit log.](docs/screenshots/strings-inspector.png)](docs/screenshots/strings-inspector.png) |
 
 ## Quick start
 
@@ -40,6 +53,42 @@ Open **<http://localhost:8000/>**. On Windows, `py -3 -m http.server 8000 --bind
 2. Start with low speaker volume or lower **GAIN / PRE-AMP**. Select **ENGAGE STREAM**. The playhead moves over the waveform; the FFT bars and waterfall show the signal *after* the filter and gain. Try **LOWPASS** and move **CUTOFF FREQ** down. The spectrum changes; the SHA-256 digest does not.
 3. Select **HALT**, then **STRINGS (≥5)** and search for `PROJECT` to find a printable marker in the generated file. The LSB panel is a different view: it reads bits, not contiguous text. Neither result by itself proves anything about an unknown file.
 4. To inspect your own short, trusted sample, choose **INGEST AUDIO TARGET** or drop a file onto the page. Browser codec support varies; start with PCM WAV. This replaces the working specimen, not the file on disk.
+
+## Experiment gallery
+
+These panel close-ups were captured in Chromium using synthetic WAVs. Open a plot for the full-size image. To try the experiments silently, mute your speakers rather than setting the workbench gain to zero: the analyser reads the signal *after* gain.
+
+### Palette memory
+
+One tone rises while another falls. Where their pitches meet, they draw an X. Loop the [one-second crossed sweeps](docs/TESTING.md#crossed-sweeps-for-the-gallery) at 1× in **ALLPASS**. Switch **COLORMAP** from **CYBER_THERMAL** to **MATRIX_PHOSPHOR** to **INFERNO_RADAR**, leaving time for a few rows between switches.
+
+[![A single waterfall with crossing traces in blue and yellow at the bottom, green in the middle, and violet and orange at the top.](docs/screenshots/palette-history.png)](docs/screenshots/palette-history.png)
+
+Read this capture **bottom to top**: each new row uses the selected palette, while older rows keep their colors. The colors change mid-sweep; the pitches don't jump.
+
+### Filter comparison
+
+Keep the sweep file loaded. Set **CUTOFF FREQ** to **1,200 Hz** and use **MATRIX_PHOSPHOR** for both runs. These captures are paused about **0.10 s** into the loop at 1× and 100% gain. Change only **FILTER TOPOLOGY**: the higher-frequency peak on the right drops almost to the floor in **LOWPASS**, while the lower peak on the left remains. The file digest stays the same.
+
+| ALLPASS · reference | LOWPASS · attenuate the high end |
+| --- | --- |
+| ![Filter selector set to ALLPASS with the cutoff at 1200 Hz.](docs/screenshots/filter-allpass-controls.png) | ![Filter selector set to LOWPASS with the cutoff still at 1200 Hz.](docs/screenshots/filter-lowpass-controls.png) |
+| [![Two tall groups of FFT bars above bright crossing traces in the green waterfall.](docs/screenshots/filter-allpass.png)](docs/screenshots/filter-allpass.png) | [![The low-frequency bars remain tall, but the higher group is barely above the baseline and its green trace is dim.](docs/screenshots/filter-lowpass.png)](docs/screenshots/filter-lowpass.png) |
+
+### Spectral text
+
+Return to **ALLPASS** at **1×**, choose **INFERNO_RADAR**, then open **SYNTHESIZE SPECTRAL TEXT**. Enter `XOX` and compile. This makes a new local specimen, `SIGINT_INTERCEPT_XOX.wav`. Pause near **6.2 s** to see the three groups of strokes. Frequency runs across the waterfall; the successive columns of each glyph appear over *time*, not as a horizontal line of type.
+
+| Input · spectral word | Output · detail around the 9.5–15.2 kHz glyph tones |
+| --- | --- |
+| [![Spectral watermark dialog with XOX entered in the callsign field.](docs/screenshots/spectral-text-dialog.png)](docs/screenshots/spectral-text-dialog.png) | [![Orange tone strokes on a violet waterfall forming three successive glyph patterns.](docs/screenshots/spectral-xox.png)](docs/screenshots/spectral-xox.png) |
+
+### Tones and bytes
+
+| Recognize a keypad tone | Recover a test label |
+| --- | --- |
+| [![DTMF matrix paused on C, with a sequence ending in C below the grid.](docs/screenshots/dtmf-tone.png)](docs/screenshots/dtmf-tone.png) | [![Bitplane extractor with HELLO AUDIO in the input and at the start of the decoded text, followed by null markers.](docs/screenshots/lsb-readback.png)](docs/screenshots/lsb-readback.png) |
+| Play the built-in specimen and pause near **2.4 s**. The 852 Hz row and 1,633 Hz column match **C**. Held tones can register more than once; the sequence is a heuristic readout. | On the [silent control WAV](docs/TESTING.md#a-reproducible-control-file), enter `HELLO AUDIO` and choose **INJECT LSB PAYLOAD**. Re-extract with the default offset and step: the preview starts with the label. You're reading the newly encoded WAV, not the original silence file. |
 
 ## Control reference
 
