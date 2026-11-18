@@ -16,7 +16,7 @@ Copy these files **with their directories**. Relative asset URLs work under a si
 
 ### GitHub Pages (optional, for maintainers)
 
-There is no deployment workflow in this repository. If publishing the repository root is appropriate, go to **Settings → Pages → Build and deployment → Deploy from a branch**, choose the intended publishing branch and **`/(root)`**, then save. `docs/` contains manuals, not the entry page. Use the HTTPS site URL reported by Pages. The [Validate workflow](../.github/workflows/validate.yml) checks the repository; it does not publish it.
+There is no deployment workflow in this repository; Pages builds the branch directly. The repository root is currently published from **`main`** and **`/(root)`** at <https://zazieproductions.github.io/spectre-signal/>. If publishing the repository root is appropriate, go to **Settings → Pages → Build and deployment → Deploy from a branch**, choose the intended publishing branch and **`/(root)`**, then save. `docs/` contains manuals, not the entry page. Use the HTTPS site URL reported by Pages. The [Validate workflow](../.github/workflows/validate.yml) checks the repository; it does not publish it.
 
 Branch-root publishing can expose other tracked files too. If you only intend to serve the three runtime files above, stage just those files on your static host instead.
 
